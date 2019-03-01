@@ -1,0 +1,57 @@
+﻿@{
+    Layout = "~/_Layout.cshtml";
+
+    var db = Database.Open("ScriptureDB");
+    var selectCommand = "SELECT * FROM Scriptures";
+    var searchTerm = "";
+    Page.Title = "All Scriptures";
+
+    if (!Request.QueryString["searchBook"].IsEmpty())
+    {
+        selectCommand = "SELECT * FROM Scriptures WHERE Book = @0";
+        searchTerm = Request.QueryString["searchBook"];
+    }
+
+    if (!Request.QueryString["searchKeyword"].IsEmpty())
+    {
+        selectCommand = "SELECT * FROM Scriptures WHERE Note LIKE @0";
+        searchTerm = "%" + Request.QueryString["searchKeyword"] + "%";
+    }
+
+    var selectedData = db.Query(selectCommand, searchTerm);
+    var grid = new WebGrid(source: selectedData, defaultSort: "Date", rowsPerPage: 5);
+}
+
+<h2>View All Scriptures</h2>
+<p><a href="~/AddScriptureView">Add a Scripture</a></p>
+<div>
+    @grid.GetHtml(
+        tableStyle: "grid",
+        headerStyle: "head",
+        alternatingRowStyle: "alt",
+        columns: grid.Columns(
+            grid.Column(format: @<a href="~/editScriptureView?id=@item.ID">Edit</a>),
+                                    grid.Column("Date"),
+                                    grid.Column("Book"),
+                                    grid.Column("Chapter"),
+                                    grid.Column("Verse"),
+                                    grid.Column("Note"),
+                                    grid.Column(format: @<a href="~/DeleteScriptureView?id=@item.ID">Delete</a>)
+                                               )
+                                            )
+</div>
+<br />
+<form method="get">
+    <div class="search">
+        <label for="searchBook">Search by Book:</label>
+        <input type="text" name="searchBook"
+               value="@Request.QueryString["searchBook"]" />
+        <input type="Submit" value="Search Book" /><br />
+    </div>
+    <div class="search">
+        <label for="SearchKeyword">Search notes for keyword:</label>
+        <input type="text" name="searchKeyword" value="@Request.QueryString["searchKeyword"]" />
+        <input type="Submit" value="Search Keyword" /><br />
+    </div>
+</form>
+
